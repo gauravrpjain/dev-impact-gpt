@@ -7,31 +7,31 @@ export const Footer: FC = () => {
       <div className="hidden sm:flex"></div>
 
       <div className="hidden sm:flex italic text-sm">
-        Created by
+        Inspired by Paul Graham GPT by
         <a
           className="hover:opacity-50 mx-1"
           href="https://twitter.com/mckaywrigley"
           target="_blank"
           rel="noreferrer"
         >
-          Mckay Wrigley
+          Mckay Wrigley.
         </a>
-        based on the essays of
+        Created by  
         <a
           className="hover:opacity-50 ml-1"
-          href="https://twitter.com/paulg"
+          href="https://twitter.com/gauravrpjain"
           target="_blank"
           rel="noreferrer"
         >
-          Paul Graham
+          Gaurav Jain
         </a>
-        .
+        and Aline Weng.
       </div>
 
       <div className="flex space-x-4">
         <a
           className="flex items-center hover:opacity-50"
-          href="https://twitter.com/mckaywrigley"
+          href="https://twitter.com/gauravrpjain"
           target="_blank"
           rel="noreferrer"
         >
@@ -40,7 +40,7 @@ export const Footer: FC = () => {
 
         <a
           className="flex items-center hover:opacity-50"
-          href="https://github.com/mckaywrigley/paul-graham-gpt"
+          href="https://github.com/gauravrpjain/dev-impact-gpt"
           target="_blank"
           rel="noreferrer"
         >
