@@ -10,7 +10,7 @@ const CHUNK_SIZE = 200;
 
 const getEssaysFromCSV = async () => {
   return new Promise((resolve, reject) => {
-    const essays: PGEssay[] = [];
+    const essays: any[] = [];
 
     fs.createReadStream(CSV_FILE_PATH)
       .pipe(csvParser())
