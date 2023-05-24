@@ -37,7 +37,7 @@ const getEssaysFromCSV = async () => {
   });
 };
 
-const chunkEssay = async (essay) => {
+const chunkEssay = async (essay: PGEssay) => {
   const { title, url, date, thanks, content, ...chunklessSection } = essay;
 
   let essayTextChunks = [];
