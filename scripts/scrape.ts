@@ -1,120 +1,50 @@
 import { PGChunk, PGEssay, PGJSON } from "@/types";
 import axios from "axios";
-import * as cheerio from "cheerio";
 import fs from "fs";
 import { encode } from "gpt-3-encoder";
+import csvParser from 'csv-parser';
 
-const BASE_URL = "http://www.paulgraham.com/";
+
+const CSV_FILE_PATH = 'scripts/disclosure.csv';
 const CHUNK_SIZE = 200;
 
-const getLinks = async () => {
-  const html = await axios.get(`${BASE_URL}articles.html`);
-  const $ = cheerio.load(html.data);
-  const tables = $("table");
+const getEssaysFromCSV = async () => {
+  return new Promise((resolve, reject) => {
+    const essays = [];
 
-  const linksArr: { url: string; title: string }[] = [];
+    fs.createReadStream(CSV_FILE_PATH)
+      .pipe(csvParser())
+      .on('data', (data) => {
+        const essay = {
+          title: data.title,
+          url: data.url,
+          date: data.date,
+          thanks: data.thanks,
+          content: data.content,
+          length: data.content.length,
+          tokens: encode(data.content).length,
+          chunks: [],
+        };
 
-  tables.each((i, table) => {
-    if (i === 2) {
-      const links = $(table).find("a");
-      links.each((i, link) => {
-        const url = $(link).attr("href");
-        const title = $(link).text();
-
-        if (url && url.endsWith(".html")) {
-          const linkObj = {
-            url,
-            title
-          };
-
-          linksArr.push(linkObj);
-        }
+        essays.push(essay);
+      })
+      .on('end', () => {
+        resolve(essays);
+      })
+      .on('error', (error) => {
+        reject(error);
       });
-    }
   });
-
-  return linksArr;
 };
 
-const getEssay = async (linkObj: { url: string; title: string }) => {
-  const { title, url } = linkObj;
-
-  let essay: PGEssay = {
-    title: "",
-    url: "",
-    date: "",
-    thanks: "",
-    content: "",
-    length: 0,
-    tokens: 0,
-    chunks: []
-  };
-
-  const fullLink = BASE_URL + url;
-  const html = await axios.get(fullLink);
-  const $ = cheerio.load(html.data);
-  const tables = $("table");
-
-  tables.each((i, table) => {
-    if (i === 1) {
-      const text = $(table).text();
-
-      let cleanedText = text.replace(/\s+/g, " ");
-      cleanedText = cleanedText.replace(/\.([a-zA-Z])/g, ". $1");
-
-      const date = cleanedText.match(/([A-Z][a-z]+ [0-9]{4})/);
-      let dateStr = "";
-      let textWithoutDate = "";
-
-      if (date) {
-        dateStr = date[0];
-        textWithoutDate = cleanedText.replace(date[0], "");
-      }
-
-      let essayText = textWithoutDate.replace(/\n/g, " ");
-      let thanksTo = "";
-
-      const split = essayText.split(". ").filter((s) => s);
-      const lastSentence = split[split.length - 1];
-
-      if (lastSentence && lastSentence.includes("Thanks to")) {
-        const thanksToSplit = lastSentence.split("Thanks to");
-
-        if (thanksToSplit[1].trim()[thanksToSplit[1].trim().length - 1] === ".") {
-          thanksTo = "Thanks to " + thanksToSplit[1].trim();
-        } else {
-          thanksTo = "Thanks to " + thanksToSplit[1].trim() + ".";
-        }
-
-        essayText = essayText.replace(thanksTo, "");
-      }
-
-      const trimmedContent = essayText.trim();
-
-      essay = {
-        title,
-        url: fullLink,
-        date: dateStr,
-        thanks: thanksTo.trim(),
-        content: trimmedContent,
-        length: trimmedContent.length,
-        tokens: encode(trimmedContent).length,
-        chunks: []
-      };
-    }
-  });
-
-  return essay;
-};
-
-const chunkEssay = async (essay: PGEssay) => {
+const chunkEssay = async (essay) => {
   const { title, url, date, thanks, content, ...chunklessSection } = essay;
 
   let essayTextChunks = [];
 
   if (encode(content).length > CHUNK_SIZE) {
-    const split = content.split(". ");
-    let chunkText = "";
+    const split = content.split('. ');
+    let chunkText = '';
 
     for (let i = 0; i < split.length; i++) {
       const sentence = split[i];
@@ -123,13 +53,13 @@ const chunkEssay = async (essay: PGEssay) => {
 
       if (chunkTextTokenLength + sentenceTokenLength.length > CHUNK_SIZE) {
         essayTextChunks.push(chunkText);
-        chunkText = "";
+        chunkText = '';
       }
 
       if (sentence[sentence.length - 1].match(/[a-z0-9]/i)) {
-        chunkText += sentence + ". ";
+        chunkText += sentence + '. ';
       } else {
-        chunkText += sentence + " ";
+        chunkText += sentence + ' ';
       }
     }
 
@@ -141,7 +71,7 @@ const chunkEssay = async (essay: PGEssay) => {
   const essayChunks = essayTextChunks.map((text) => {
     const trimmedText = text.trim();
 
-    const chunk: PGChunk = {
+    const chunk = {
       essay_title: title,
       essay_url: url,
       essay_date: date,
@@ -161,7 +91,7 @@ const chunkEssay = async (essay: PGEssay) => {
       const prevChunk = essayChunks[i - 1];
 
       if (chunk.content_tokens < 100 && prevChunk) {
-        prevChunk.content += " " + chunk.content;
+        prevChunk.content += ' ' + chunk.content;
         prevChunk.content_length += chunk.content_length;
         prevChunk.content_tokens += chunk.content_tokens;
         essayChunks.splice(i, 1);
@@ -170,33 +100,37 @@ const chunkEssay = async (essay: PGEssay) => {
     }
   }
 
-  const chunkedSection: PGEssay = {
+  const chunkedSection = {
     ...essay,
-    chunks: essayChunks
+    chunks: essayChunks,
   };
 
   return chunkedSection;
 };
 
+
 (async () => {
-  const links = await getLinks();
+  try {
+    const essays = await getEssaysFromCSV();
 
-  let essays = [];
+    const chunkedEssays = await Promise.all(
+      essays.map(async (essay) => {
+        const chunkedEssay = await chunkEssay(essay);
+        return chunkedEssay;
+      })
+    );
 
-  for (let i = 0; i < links.length; i++) {
-    const essay = await getEssay(links[i]);
-    const chunkedEssay = await chunkEssay(essay);
-    essays.push(chunkedEssay);
+    const json = {
+      current_date: '2023-25-24',
+      author: 'IFC Disclosure',
+      url: 'http://disclosures.ifc.org/',
+      length: chunkedEssays.reduce((acc, essay) => acc + essay.length, 0),
+      tokens: chunkedEssays.reduce((acc, essay) => acc + essay.tokens, 0),
+      essays: chunkedEssays,
+    };
+
+    fs.writeFileSync('scripts/pg.json', JSON.stringify(json));
+  } catch (error) {
+    console.error(error);
   }
-
-  const json: PGJSON = {
-    current_date: "2023-03-01",
-    author: "Paul Graham",
-    url: "http://www.paulgraham.com/articles.html",
-    length: essays.reduce((acc, essay) => acc + essay.length, 0),
-    tokens: essays.reduce((acc, essay) => acc + essay.tokens, 0),
-    essays
-  };
-
-  fs.writeFileSync("scripts/pg.json", JSON.stringify(json));
 })();
