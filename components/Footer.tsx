@@ -16,16 +16,16 @@ export const Footer: FC = () => {
         >
           Mckay Wrigley.
         </a>
-        Created by  
+        Created by
         <a
           className="hover:opacity-50 ml-1"
           href="https://twitter.com/gauravrpjain"
           target="_blank"
           rel="noreferrer"
         >
-          Gaurav Jain
+          Gaurav Jain 
         </a>
-        and Aline Weng.
+         and Aline Weng.
       </div>
 
       <div className="flex space-x-4">
