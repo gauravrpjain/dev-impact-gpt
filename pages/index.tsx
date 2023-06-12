@@ -135,7 +135,7 @@ export default function Home() {
     }
   };
 
-
+const handleSave = () => {
     localStorage.setItem("PG_KEY", process.env.OPENAI_API_KEY);
     localStorage.setItem("PG_MATCH_COUNT", matchCount.toString());
     localStorage.setItem("PG_MODE", mode);
