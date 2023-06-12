@@ -18,8 +18,13 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [mode, setMode] = useState<"search" | "chat">("chat");
   const [matchCount, setMatchCount] = useState<number>(5);
-  const [apiKey, setApiKey] = useState<string>(process.env.OPENAI_API_KEY);
+  const [apiKey, setApiKey] = useState<string>("");
 
+  const handleSearch = async () => {
+    if (!apiKey) {
+      alert("Please enter an API key.");
+      return;
+    }
 
     if (!query) {
       alert("Please enter a query.");
@@ -56,6 +61,10 @@ export default function Home() {
   };
 
   const handleAnswer = async () => {
+    if (!apiKey) {
+      alert("Please enter an API key.");
+      return;
+    }
 
     if (!query) {
       alert("Please enter a query.");
@@ -85,7 +94,7 @@ export default function Home() {
     setChunks(results);
 
     const prompt = endent`
-    Use the following passages to search for projects similar to the query: "${query}"
+    Use the following passages to provide an answer to the query: "${query}"
 
     ${results?.map((d: any) => d.content).join("\n\n")}
     `;
@@ -135,8 +144,13 @@ export default function Home() {
     }
   };
 
-const handleSave = () => {
-    localStorage.setItem("PG_KEY", process.env.OPENAI_API_KEY);
+  const handleSave = () => {
+    if (apiKey.length !== 51) {
+      alert("Please enter a valid API key.");
+      return;
+    }
+
+    localStorage.setItem("PG_KEY", apiKey);
     localStorage.setItem("PG_MATCH_COUNT", matchCount.toString());
     localStorage.setItem("PG_MODE", mode);
 
@@ -145,11 +159,11 @@ const handleSave = () => {
   };
 
   const handleClear = () => {
-
+    localStorage.removeItem("PG_KEY");
     localStorage.removeItem("PG_MATCH_COUNT");
     localStorage.removeItem("PG_MODE");
 
-
+    setApiKey("");
     setMatchCount(5);
     setMode("search");
   };
@@ -163,7 +177,7 @@ const handleSave = () => {
   }, [matchCount]);
 
   useEffect(() => {
-    const PG_KEY = process.env.OPENAI_API_KEY;
+    const PG_KEY = localStorage.getItem("PG_KEY");
     const PG_MATCH_COUNT = localStorage.getItem("PG_MATCH_COUNT");
     const PG_MODE = localStorage.getItem("PG_MODE");
 
@@ -221,7 +235,7 @@ const handleSave = () => {
                     onChange={(e) => setMode(e.target.value as "search" | "chat")}
                   >
                     <option value="search">Search</option>
-                    <option value="chat">Generate</option>
+                    <option value="chat">Chat</option>
                   </select>
                 </div>
 
@@ -237,6 +251,22 @@ const handleSave = () => {
                   />
                 </div>
 
+                <div className="mt-2">
+                  <div>OpenAI API Key</div>
+                  <input
+                    type="password"
+                    placeholder="OpenAI API Key"
+                    className="max-w-[400px] block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                    value={apiKey}
+                    onChange={(e) => {
+                      setApiKey(e.target.value);
+
+                      if (e.target.value.length !== 51) {
+                        setShowSettings(true);
+                      }
+                    }}
+                  />
+                </div>
 
                 <div className="mt-4 flex space-x-2 justify-center">
                   <div
@@ -256,7 +286,7 @@ const handleSave = () => {
               </div>
             )}
 
-
+            {apiKey.length === 51 ? (
               <div className="relative w-full mt-4">
                 <IconSearch className="absolute top-3 w-10 left-1 h-6 rounded-full opacity-50 sm:left-3 sm:top-4 sm:h-8" />
 
@@ -264,7 +294,7 @@ const handleSave = () => {
                   ref={inputRef}
                   className="h-12 w-full rounded-full border border-zinc-600 pr-12 pl-11 focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800 sm:h-16 sm:py-2 sm:pr-16 sm:pl-16 sm:text-lg"
                   type="text"
-                  placeholder="A Coffee project in Uganda supporting local farmers?"
+                  placeholder="Coffee project in Uganda that focus on farmers?"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -277,7 +307,18 @@ const handleSave = () => {
                   />
                 </button>
               </div>
-
+            ) : (
+              <div className="text-center font-bold text-3xl mt-7">
+                Please enter your
+                <a
+                  className="mx-2 underline hover:opacity-50"
+                  href="https://platform.openai.com/account/api-keys"
+                >
+                  OpenAI API key
+                </a>
+                in settings.
+              </div>
+            )}
 
             {loading ? (
               <div className="mt-6 w-full">
