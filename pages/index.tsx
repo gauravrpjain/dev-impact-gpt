@@ -144,11 +144,6 @@ export default function Home() {
     }
   };
 
-  const handleSave = () => {
-    if (apiKey.length !== 51) {
-      alert("Please enter a valid API key.");
-      return;
-    }
 
     localStorage.setItem("PG_KEY", apiKey);
     localStorage.setItem("PG_MATCH_COUNT", matchCount.toString());
@@ -235,7 +230,7 @@ export default function Home() {
                     onChange={(e) => setMode(e.target.value as "search" | "chat")}
                   >
                     <option value="search">Search</option>
-                    <option value="chat">Chat</option>
+                    <option value="chat">Generate</option>
                   </select>
                 </div>
 
@@ -251,22 +246,6 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="mt-2">
-                  <div>OpenAI API Key</div>
-                  <input
-                    type="password"
-                    placeholder="OpenAI API Key"
-                    className="max-w-[400px] block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
-                    value={apiKey}
-                    onChange={(e) => {
-                      setApiKey(e.target.value);
-
-                      if (e.target.value.length !== 51) {
-                        setShowSettings(true);
-                      }
-                    }}
-                  />
-                </div>
 
                 <div className="mt-4 flex space-x-2 justify-center">
                   <div
