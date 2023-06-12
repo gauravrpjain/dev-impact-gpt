@@ -18,7 +18,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [mode, setMode] = useState<"search" | "chat">("chat");
   const [matchCount, setMatchCount] = useState<number>(5);
-  const [apiKey, setApiKey] = process.env.OPENAI_API_KEY;
+  const [apiKey, setApiKey] = useState<string>(process.env.OPENAI_API_KEY);
 
 
     if (!query) {
@@ -136,7 +136,7 @@ export default function Home() {
   };
 
 
-    localStorage.setItem("PG_KEY", apiKey);
+    localStorage.setItem("PG_KEY", process.env.OPENAI_API_KEY);
     localStorage.setItem("PG_MATCH_COUNT", matchCount.toString());
     localStorage.setItem("PG_MODE", mode);
 
