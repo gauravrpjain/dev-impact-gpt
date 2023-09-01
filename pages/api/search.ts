@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/utils";
+import { match } from "assert";
 
 export const config = {
   runtime: "edge"
@@ -27,7 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { data: chunks, error } = await supabaseAdmin.rpc("pg_search", {
       query_embedding: embedding,
-      similarity_threshold: 0.01,
+      similarity_threshold: 0.5,
       match_count: 5
     });
 
